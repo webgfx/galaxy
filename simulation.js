@@ -116,47 +116,58 @@ export class Simulation {
                 const time = uniform(0);
                 material.userData.timeUniform = time;
                 
-                // Multi-scale granulation for realistic solar surface
-                const n1 = mx_noise_float(pos.mul(8.0).add(time.mul(0.08)));
-                const n2 = mx_noise_float(pos.mul(20.0).add(time.mul(0.2)));
-                const n3 = mx_noise_float(pos.mul(40.0).add(time.mul(0.4)));
-                const n4 = mx_noise_float(pos.mul(80.0).add(time.mul(0.6)));
-                const n5 = mx_noise_float(pos.mul(4.0).add(time.mul(0.03)));
+                // Multi-scale animated granulation for living solar surface
+                const n1 = mx_noise_float(pos.mul(6.0).add(time.mul(0.06)));
+                const n2 = mx_noise_float(pos.mul(15.0).add(time.mul(0.15)));
+                const n3 = mx_noise_float(pos.mul(35.0).add(time.mul(0.25)));
+                const n4 = mx_noise_float(pos.mul(70.0).add(time.mul(0.35)));
+                const n5 = mx_noise_float(pos.mul(3.0).add(time.mul(0.02)));
                 
-                // Combine for granulation and sunspots
-                const granulation = n1.mul(0.35).add(n2.mul(0.25)).add(n3.mul(0.2)).add(n4.mul(0.1)).add(n5.mul(0.1));
+                // Combine for beautiful granulation
+                const granulation = n1.mul(0.30).add(n2.mul(0.28)).add(n3.mul(0.22)).add(n4.mul(0.12)).add(n5.mul(0.08));
                 
-                // Sunspots (darker regions)
-                const sunspots = mx_noise_float(pos.mul(6.0).add(time.mul(0.02)));
-                const sunspotMask = sunspots.step(0.3).mul(0.4);
+                // Solar flare/prominence hints
+                const flareNoise = mx_noise_float(pos.mul(4.0).add(time.mul(0.04)));
+                const flareMask = flareNoise.step(0.25).mul(flareNoise);
                 
-                // Strong limb darkening for 3D spherical appearance
-                // normalView.z gives us how much the surface faces the camera (1 = facing, 0 = edge)
+                // Sunspots (darker cooler regions)
+                const sunspotNoise = mx_noise_float(pos.mul(5.0).add(time.mul(0.015)));
+                const sunspotMask = sunspotNoise.step(0.28).mul(0.45);
+                
+                // Limb darkening for 3D spherical appearance
                 const viewAngle = normalView.z.abs();
-                const limbDarkening = viewAngle.pow(0.4); // Strong center-to-edge falloff
+                const limbDarkening = viewAngle.pow(0.35);
                 
-                // Color gradient from bright center to dark edge
-                const coreColor = vec3(1.0, 1.0, 0.9);   // Bright white-yellow center
-                const midColor = vec3(1.0, 0.75, 0.3);   // Orange-yellow
-                const edgeColor = vec3(0.8, 0.25, 0.02); // Dark red-orange edge
-                const spotColor = vec3(0.5, 0.2, 0.08);  // Dark sunspot
+                // Beautiful color gradient from bright center to fiery edge
+                const coreColor = vec3(1.0, 1.0, 0.95);    // Brilliant white-yellow
+                const innerColor = vec3(1.0, 0.92, 0.65);  // Warm yellow
+                const midColor = vec3(1.0, 0.70, 0.28);    // Golden orange
+                const outerColor = vec3(0.95, 0.45, 0.08); // Fiery orange
+                const edgeColor = vec3(0.85, 0.22, 0.02);  // Deep red edge
+                const spotColor = vec3(0.55, 0.25, 0.10);  // Dark sunspot
                 
-                // Layer the colors based on limb darkening
-                let sunColor = mix(edgeColor, midColor, limbDarkening.pow(0.6));
-                sunColor = mix(sunColor, coreColor, limbDarkening.pow(1.5));
+                // Multi-layer color blending
+                let sunColor = mix(edgeColor, outerColor, limbDarkening.pow(0.4));
+                sunColor = mix(sunColor, midColor, limbDarkening.pow(0.7));
+                sunColor = mix(sunColor, innerColor, limbDarkening.pow(1.2));
+                sunColor = mix(sunColor, coreColor, limbDarkening.pow(2.0));
                 
                 // Add granulation texture
-                sunColor = sunColor.mul(granulation.mul(0.3).add(0.85));
+                sunColor = sunColor.mul(granulation.mul(0.25).add(0.88));
                 
                 // Apply sunspots
                 sunColor = mix(sunColor, spotColor, sunspotMask);
                 
                 // Enhanced corona glow at edge
-                const coronaGlow = float(1.0).sub(viewAngle).pow(2.5).mul(0.25);
-                sunColor = sunColor.add(vec3(coronaGlow, coronaGlow.mul(0.4), coronaGlow.mul(0.05)));
+                const coronaGlow = float(1.0).sub(viewAngle).pow(2.0).mul(0.35);
+                const coronaColor = vec3(coronaGlow.mul(1.2), coronaGlow.mul(0.5), coronaGlow.mul(0.08));
+                sunColor = sunColor.add(coronaColor);
                 
-                // Boost overall brightness
-                sunColor = sunColor.mul(1.15);
+                // Subtle flare brightening
+                sunColor = sunColor.add(vec3(flareMask.mul(0.15), flareMask.mul(0.08), 0.0));
+                
+                // Boost brightness for brilliant appearance
+                sunColor = sunColor.mul(1.25);
                 
                 material.colorNode = vec3(0.0);
                 material.emissiveNode = sunColor;
@@ -242,78 +253,220 @@ export class Simulation {
             }
             
             case 'Earth': {
-                // Highly detailed Earth
-                const continentNoise = mx_noise_float(pos.mul(4.0));
-                const coastDetail = mx_noise_float(pos.mul(12.0));
-                const terrainDetail = mx_noise_float(pos.mul(25.0));
-                const microDetail = mx_noise_float(pos.mul(50.0));
-                const cloudLarge = mx_noise_float(pos.mul(6.0).add(vec3(0.3, 0.0, 0.0)));
-                const cloudDetail = mx_noise_float(pos.mul(18.0).add(vec3(0.1, 0.0, 0.0)));
-                const iceNoise = mx_noise_float(pos.mul(30.0));
+                // =================================================
+                // ★ STUNNING BLUE MARBLE EARTH - The Pale Blue Dot ★
+                // =================================================
                 
-                // More vibrant ocean colors
-                const deepOcean = vec3(0.02, 0.08, 0.25);
-                const midOcean = vec3(0.04, 0.15, 0.45);
-                const shallowOcean = vec3(0.08, 0.30, 0.60);
-                const coastalWater = vec3(0.12, 0.40, 0.65);
+                // Multi-octave noise for rich organic details
+                const n1 = mx_noise_float(pos.mul(2.2));
+                const n2 = mx_noise_float(pos.mul(4.5));
+                const n3 = mx_noise_float(pos.mul(9.0));
+                const n4 = mx_noise_float(pos.mul(18.0));
+                const n5 = mx_noise_float(pos.mul(36.0));
+                const cloudN1 = mx_noise_float(pos.mul(3.5).add(vec3(0.15, 0.0, 0.08)));
+                const cloudN2 = mx_noise_float(pos.mul(7.0).add(vec3(0.08, 0.0, 0.04)));
+                const cloudN3 = mx_noise_float(pos.mul(14.0));
                 
-                const oceanDepth = mx_noise_float(pos.mul(8.0));
-                let ocean = mix(deepOcean, midOcean, oceanDepth.mul(0.5));
-                ocean = mix(ocean, shallowOcean, coastDetail.step(0.55).mul(0.5));
+                // Continent shape - natural looking continents
+                const continentBase = n1.mul(0.55).add(n2.mul(0.28)).add(n3.mul(0.17));
+                const landMask = continentBase.step(0.50);
                 
-                // Land biomes with richer, more vibrant colors
-                const tropicalForest = vec3(0.08, 0.42, 0.12);
-                const temperateForest = vec3(0.15, 0.48, 0.15);
-                const grassland = vec3(0.45, 0.58, 0.25);
-                const desert = vec3(0.88, 0.75, 0.50);
-                const tundra = vec3(0.62, 0.60, 0.55);
-                const mountain = vec3(0.52, 0.48, 0.42);
-                const snow = vec3(0.98, 0.99, 1.0);
+                // ============================================
+                // GORGEOUS DEEP OCEANS - Rich blues & turquoise
+                // ============================================
+                const oceanAbyss = vec3(0.008, 0.025, 0.12);     // Deepest ocean
+                const oceanDeep = vec3(0.015, 0.08, 0.32);       // Deep blue
+                const oceanMid = vec3(0.03, 0.18, 0.52);         // Mid depth
+                const oceanBright = vec3(0.06, 0.32, 0.68);      // Bright blue  
+                const oceanTropical = vec3(0.08, 0.52, 0.78);    // Tropical turquoise
+                const oceanCaribbean = vec3(0.15, 0.65, 0.88);   // Caribbean cyan
+                const oceanShallow = vec3(0.22, 0.72, 0.92);     // Shallow reefs
                 
-                // Latitude-based biome selection
-                const absLat = pos.y.abs();
-                const tropical = absLat.lessThan(0.25);
-                const temperate = absLat.greaterThan(0.25).and(absLat.lessThan(0.55));
-                const polar = absLat.greaterThan(0.75);
+                // Beautiful ocean depth gradient
+                let oceanColor = mix(oceanAbyss, oceanDeep, n3.mul(0.7).add(0.15));
+                oceanColor = mix(oceanColor, oceanMid, n4.mul(0.6));
+                oceanColor = mix(oceanColor, oceanBright, n3.step(0.58).mul(0.4));
                 
-                // Base land color by latitude
-                let land = select(tropical, mix(tropicalForest, desert, terrainDetail), temperateForest);
-                land = select(temperate, mix(temperateForest, grassland, terrainDetail), land);
-                land = select(polar, mix(tundra, snow, iceNoise), land);
+                // Gorgeous tropical waters near equator
+                const latitudeAbs = pos.y.abs();
+                const tropicalBand = float(1.0).sub(latitudeAbs.mul(2.5)).clamp(0.0, 1.0);
+                const tropicalIntensity = tropicalBand.mul(tropicalBand);
+                oceanColor = mix(oceanColor, oceanTropical, tropicalIntensity.mul(0.65));
+                oceanColor = mix(oceanColor, oceanCaribbean, tropicalIntensity.mul(n4.step(0.52)).mul(0.45));
                 
-                // Add mountains at high terrain values
-                const isMountain = terrainDetail.greaterThan(0.6);
-                land = select(isMountain, mix(land, mountain, terrainDetail), land);
+                // Shallow coastal waters
+                const nearCoast = continentBase.sub(0.42).mul(12.0).clamp(0.0, 1.0);
+                const shallowMix = float(1.0).sub(nearCoast).mul(tropicalIntensity.mul(0.5).add(0.2));
+                oceanColor = mix(oceanColor, oceanShallow, shallowMix.mul(0.35));
                 
-                // Snow on high mountains
-                const highMountain = terrainDetail.greaterThan(0.75);
-                land = select(highMountain, mix(land, snow, microDetail.mul(0.5).add(0.3)), land);
+                // Ocean surface shimmer
+                oceanColor = oceanColor.mul(n5.mul(0.06).add(0.97));
                 
-                // Coastal transition
-                const isLand = continentNoise.add(coastDetail.mul(0.2)).step(0.5);
-                const coastMix = continentNoise.add(coastDetail.mul(0.2)).sub(0.45).mul(10.0).clamp(0.0, 1.0);
-                const coastalLand = mix(coastalWater, land, coastMix);
-                const surface = mix(ocean, coastalLand, isLand);
+                // ============================================
+                // LUSH VIBRANT LANDS - Full of life
+                // ============================================
+                // Tropical rainforest colors
+                const rainforestDark = vec3(0.02, 0.28, 0.05);
+                const rainforestMid = vec3(0.04, 0.42, 0.08);
+                const jungleBright = vec3(0.08, 0.55, 0.12);
+                const tropicalVibrant = vec3(0.15, 0.62, 0.18);
                 
-                // Multi-layer clouds
-                const cloudBase = cloudLarge.step(0.45);
-                const cloudWispy = cloudDetail.step(0.5).mul(0.6);
-                const clouds = cloudBase.mul(0.9).add(cloudWispy.mul(0.4)).clamp(0.0, 1.0);
-                const cloudShadow = cloudBase.mul(0.15);
+                // Temperate greens
+                const forestDark = vec3(0.06, 0.38, 0.10);
+                const forestMid = vec3(0.12, 0.48, 0.16);
+                const forestLight = vec3(0.22, 0.55, 0.22);
+                const meadowGreen = vec3(0.38, 0.58, 0.28);
+                const grassYellow = vec3(0.52, 0.58, 0.32);
                 
-                const cloudColor = vec3(1.0, 1.0, 1.0);
-                let earthColor = mix(surface, surface.mul(0.85), cloudShadow);
-                earthColor = mix(earthColor, cloudColor, clouds);
+                // Arid & desert
+                const savanna = vec3(0.68, 0.58, 0.32);
+                const savannaGold = vec3(0.78, 0.65, 0.38);
+                const desertGold = vec3(0.92, 0.82, 0.52);
+                const desertOrange = vec3(0.88, 0.68, 0.42);
+                const desertRed = vec3(0.75, 0.48, 0.28);
+                const sandBright = vec3(0.95, 0.88, 0.68);
                 
-                // Enhanced blue atmosphere with stronger glow
-                const atmosColor = vec3(0.45, 0.70, 1.0);
-                earthColor = earthColor.add(atmosColor.mul(fresnel.pow(1.2)).mul(0.65));
+                // Cold regions
+                const taigaGreen = vec3(0.12, 0.32, 0.18);
+                const taigaDark = vec3(0.08, 0.25, 0.12);
+                const tundraBrown = vec3(0.48, 0.44, 0.38);
+                const tundraGray = vec3(0.58, 0.55, 0.52);
+                const arcticIce = vec3(0.92, 0.95, 0.98);
+                const snowPure = vec3(0.98, 0.99, 1.0);
                 
-                // Water reflectivity with specular highlights
-                const isWater = float(1.0).sub(isLand);
-                material.roughnessNode = mix(float(0.85), float(0.05), isWater.mul(float(1.0).sub(clouds)));
-                material.metalnessNode = mix(float(0.0), float(0.1), isWater);
-                material.colorNode = earthColor;
+                // Mountains & rocks
+                const rockDark = vec3(0.35, 0.32, 0.28);
+                const rockMid = vec3(0.48, 0.45, 0.42);
+                const rockLight = vec3(0.62, 0.58, 0.55);
+                
+                // Beach & coast
+                const beachWet = vec3(0.72, 0.65, 0.52);
+                const beachDry = vec3(0.92, 0.85, 0.72);
+                
+                // === BIOME SYSTEM BY LATITUDE ===
+                
+                // TROPICAL ZONE (0.0 - 0.20 latitude)
+                const tropicalZone = float(1.0).sub(latitudeAbs.mul(5.0)).clamp(0.0, 1.0);
+                let tropicalLand = mix(rainforestDark, rainforestMid, n3.mul(0.7).add(0.15));
+                tropicalLand = mix(tropicalLand, jungleBright, n4.mul(0.5));
+                tropicalLand = mix(tropicalLand, tropicalVibrant, n5.step(0.55).mul(0.35));
+                // Tropical deserts (Sahara-like)
+                const tropDesertMask = n1.step(0.38).mul(n2.step(0.52));
+                tropicalLand = mix(tropicalLand, desertGold, tropDesertMask.mul(0.9));
+                tropicalLand = mix(tropicalLand, desertOrange, tropDesertMask.mul(n3.step(0.48)).mul(0.5));
+                tropicalLand = mix(tropicalLand, sandBright, tropDesertMask.mul(n4.step(0.45)).mul(0.35));
+                
+                // SUBTROPICAL ZONE (0.15 - 0.40 latitude)
+                const subTropStart = latitudeAbs.sub(0.12).mul(6.0).clamp(0.0, 1.0);
+                const subTropEnd = float(1.0).sub(latitudeAbs.sub(0.38).mul(5.0).clamp(0.0, 1.0));
+                const subtropicalZone = subTropStart.mul(subTropEnd);
+                let subtropicalLand = mix(forestDark, forestMid, n3);
+                subtropicalLand = mix(subtropicalLand, meadowGreen, n4.mul(0.45));
+                subtropicalLand = mix(subtropicalLand, savanna, n1.step(0.45).mul(0.6));
+                subtropicalLand = mix(subtropicalLand, savannaGold, n1.step(0.42).mul(n2.step(0.5)).mul(0.5));
+                
+                // TEMPERATE ZONE (0.35 - 0.58 latitude)
+                const tempStart = latitudeAbs.sub(0.32).mul(5.0).clamp(0.0, 1.0);
+                const tempEnd = float(1.0).sub(latitudeAbs.sub(0.55).mul(5.0).clamp(0.0, 1.0));
+                const temperateZone = tempStart.mul(tempEnd);
+                let temperateLand = mix(forestDark, forestLight, n3);
+                temperateLand = mix(temperateLand, meadowGreen, n4.mul(0.4));
+                temperateLand = mix(temperateLand, grassYellow, n2.step(0.58).mul(0.35));
+                
+                // SUBARCTIC ZONE (0.52 - 0.75 latitude)
+                const subarcStart = latitudeAbs.sub(0.50).mul(5.0).clamp(0.0, 1.0);
+                const subarcEnd = float(1.0).sub(latitudeAbs.sub(0.72).mul(5.0).clamp(0.0, 1.0));
+                const subarcticZone = subarcStart.mul(subarcEnd);
+                let subarcticLand = mix(taigaDark, taigaGreen, n3);
+                subarcticLand = mix(subarcticLand, tundraBrown, n2.step(0.48).mul(0.55));
+                subarcticLand = mix(subarcticLand, tundraGray, latitudeAbs.sub(0.62).mul(4.0).clamp(0.0, 1.0).mul(0.5));
+                
+                // ARCTIC ZONE (0.70+ latitude)
+                const arcticZone = latitudeAbs.sub(0.68).mul(4.0).clamp(0.0, 1.0);
+                let arcticLand = mix(tundraGray, arcticIce, arcticZone.mul(0.7).add(n3.mul(0.3)));
+                arcticLand = mix(arcticLand, snowPure, arcticZone.mul(arcticZone).mul(n4.mul(0.3).add(0.7)));
+                
+                // Blend all biomes smoothly
+                let landColor = tropicalLand;
+                landColor = mix(landColor, subtropicalLand, subtropicalZone);
+                landColor = mix(landColor, temperateLand, temperateZone);
+                landColor = mix(landColor, subarcticLand, subarcticZone);
+                landColor = mix(landColor, arcticLand, arcticZone);
+                
+                // === MAJESTIC MOUNTAIN RANGES ===
+                const elevation = n2.mul(0.4).add(n3.mul(0.35)).add(n4.mul(0.25));
+                const mountainMask = float(1.0).sub(elevation.step(0.56));
+                const mtnHeight = elevation.sub(0.53).mul(3.0).clamp(0.0, 1.0);
+                
+                // Mountain color progression
+                let mtnColor = mix(rockDark, rockMid, mtnHeight.mul(0.6));
+                mtnColor = mix(mtnColor, rockLight, mtnHeight.mul(n5.mul(0.5)));
+                
+                // Snow line varies by latitude
+                const snowLineHeight = float(0.52).sub(latitudeAbs.mul(0.45)).clamp(0.18, 0.52);
+                const aboveSnowLine = mtnHeight.sub(snowLineHeight).mul(4.5).clamp(0.0, 1.0);
+                mtnColor = mix(mtnColor, snowPure, aboveSnowLine.mul(n5.mul(0.2).add(0.8)));
+                
+                // Apply mountains
+                landColor = mix(landColor, mtnColor, mountainMask.mul(mtnHeight.add(0.3).clamp(0.0, 1.0)));
+                
+                // === BEAUTIFUL COASTLINES & BEACHES ===
+                const coastDist = continentBase.sub(0.46).mul(18.0).clamp(0.0, 1.0);
+                const beachZone = float(1.0).sub(coastDist.mul(2.5).clamp(0.0, 1.0));
+                // Wet sand near water, dry sand further up
+                const beachGrad = mix(beachWet, beachDry, coastDist.mul(1.5).clamp(0.0, 1.0));
+                // Only add beaches in warm areas
+                const beachClimate = float(1.0).sub(latitudeAbs.mul(1.5)).clamp(0.3, 1.0);
+                landColor = mix(landColor, beachGrad, beachZone.mul(beachClimate).mul(0.85));
+                
+                // === COMBINE LAND & OCEAN ===
+                let surfaceColor = mix(landColor, oceanColor, landMask);
+                
+                // ============================================
+                // BEAUTIFUL WISPY CLOUDS - Fluffy & realistic
+                // ============================================
+                const cloud1 = cloudN1.step(0.44);
+                const cloud2 = cloudN2.step(0.50).mul(0.6);
+                const cloud3 = cloudN3.step(0.55).mul(0.35);
+                const cloudDensity = cloud1.add(cloud2).add(cloud3).clamp(0.0, 1.0);
+                const cloudSoftness = cloudDensity.mul(cloudDensity); // Soft edges
+                
+                // Cloud shadows on surface
+                surfaceColor = surfaceColor.mul(float(1.0).sub(cloud1.mul(0.18)));
+                
+                // Bright fluffy clouds with subtle shading
+                const cloudBright = vec3(1.0, 1.0, 1.0);
+                const cloudShade = vec3(0.92, 0.94, 0.98);
+                const cloudFinal = mix(cloudShade, cloudBright, cloudSoftness);
+                surfaceColor = mix(surfaceColor, cloudFinal, cloudSoftness.mul(0.88));
+                
+                // ============================================
+                // ICONIC BLUE ATMOSPHERIC HALO
+                // ============================================
+                const atmosBright = vec3(0.45, 0.75, 1.0);
+                const atmosDeep = vec3(0.30, 0.58, 0.95);
+                const atmosGlow = vec3(0.55, 0.82, 1.0);
+                
+                // Multi-layer atmosphere
+                const innerGlow = fresnel.mul(0.65);
+                const outerGlow = fresnel.mul(fresnel).mul(0.4);
+                const rimGlow = fresnel.mul(fresnel).mul(fresnel).mul(0.2);
+                
+                let atmosColor = mix(atmosBright, atmosDeep, fresnel.mul(0.6));
+                surfaceColor = surfaceColor.add(atmosColor.mul(innerGlow));
+                surfaceColor = surfaceColor.add(atmosGlow.mul(outerGlow));
+                surfaceColor = surfaceColor.add(atmosBright.mul(rimGlow));
+                
+                // ============================================
+                // FINAL TOUCHES - Vibrancy boost
+                // ============================================
+                surfaceColor = surfaceColor.mul(1.15);
+                
+                // Material properties - glossy oceans, matte land
+                material.colorNode = surfaceColor;
+                const wetness = landMask.mul(float(1.0).sub(cloudSoftness));
+                material.roughnessNode = mix(float(0.72), float(0.06), wetness);
+                material.metalnessNode = mix(float(0.0), float(0.15), wetness);
                 break;
             }
             
@@ -380,23 +533,25 @@ export class Simulation {
                 const bands1 = sin(bandY1).mul(0.5).add(0.5);
                 const bands2 = sin(bandY2).mul(0.5).add(0.5);
                 
-                // More vibrant Jupiter colors
-                const cream = vec3(0.98, 0.94, 0.85);
-                const tan = vec3(0.88, 0.76, 0.62);
-                const orange = vec3(0.92, 0.70, 0.48);
-                const brown = vec3(0.65, 0.48, 0.36);
-                const darkBrown = vec3(0.48, 0.35, 0.25);
-                const redSpot = vec3(0.95, 0.52, 0.40);
-                const white = vec3(0.98, 0.97, 0.95);
+                // Stunning vibrant Jupiter colors
+                const cream = vec3(1.0, 0.96, 0.88);
+                const tan = vec3(0.92, 0.80, 0.65);
+                const orange = vec3(0.98, 0.72, 0.45);
+                const rust = vec3(0.88, 0.58, 0.38);
+                const brown = vec3(0.70, 0.50, 0.35);
+                const darkBrown = vec3(0.52, 0.38, 0.28);
+                const redSpot = vec3(0.98, 0.48, 0.35);
+                const white = vec3(1.0, 0.99, 0.97);
                 
-                // Layer bands with more color variety
+                // Layer bands with rich color variety
                 let jupiterColor = mix(tan, cream, bands1);
-                jupiterColor = mix(jupiterColor, orange, bands1.step(0.35).mul(0.3));
-                jupiterColor = mix(jupiterColor, brown, bands2.mul(0.45));
+                jupiterColor = mix(jupiterColor, orange, bands1.step(0.4).mul(0.45));
+                jupiterColor = mix(jupiterColor, rust, bands1.step(0.25).mul(0.35));
+                jupiterColor = mix(jupiterColor, brown, bands2.mul(0.5));
                 
-                // Add turbulent eddies
-                jupiterColor = mix(jupiterColor, darkBrown, stormNoise.step(0.58).mul(0.4));
-                jupiterColor = mix(jupiterColor, white, stormNoise.step(0.82).mul(0.35));
+                // Add turbulent eddies and storms
+                jupiterColor = mix(jupiterColor, darkBrown, stormNoise.step(0.55).mul(0.45));
+                jupiterColor = mix(jupiterColor, white, stormNoise.step(0.80).mul(0.4));
                 
                 // Fine cloud texture
                 jupiterColor = mix(jupiterColor, jupiterColor.mul(0.88), fineDetail.step(0.65).mul(0.2));
@@ -462,28 +617,31 @@ export class Simulation {
                 const fineDetail = mx_noise_float(pos.mul(30.0));
                 const bands = sin(pos.y.mul(8.0).add(subtle.mul(0.5))).mul(0.5).add(0.5);
                 
-                // More beautiful cyan-turquoise colors
-                const uranusLight = vec3(0.78, 0.95, 0.98);
-                const uranusBright = vec3(0.70, 0.90, 0.95);
-                const uranusBase = vec3(0.62, 0.85, 0.90);
-                const uranusDark = vec3(0.52, 0.75, 0.82);
-                const uranusPole = vec3(0.68, 0.92, 0.95);
+                // Stunning cyan-aquamarine colors
+                const uranusLight = vec3(0.75, 0.95, 0.98);
+                const uranusBright = vec3(0.65, 0.92, 0.96);
+                const uranusBase = vec3(0.55, 0.88, 0.92);
+                const uranusMid = vec3(0.50, 0.82, 0.88);
+                const uranusDark = vec3(0.45, 0.75, 0.82);
+                const uranusPole = vec3(0.62, 0.94, 0.96);
                 
-                let uranusColor = mix(uranusBase, uranusLight, bands.mul(0.35));
-                uranusColor = mix(uranusColor, uranusBright, bands.step(0.5).mul(0.25));
-                uranusColor = mix(uranusColor, uranusDark, detail.step(0.52).mul(0.18));
-                uranusColor = mix(uranusColor, uranusColor.mul(0.95), fineDetail.step(0.6).mul(0.08));
+                let uranusColor = mix(uranusBase, uranusLight, bands.mul(0.4));
+                uranusColor = mix(uranusColor, uranusBright, bands.step(0.5).mul(0.3));
+                uranusColor = mix(uranusColor, uranusMid, bands.step(0.35).mul(0.2));
+                uranusColor = mix(uranusColor, uranusDark, detail.step(0.50).mul(0.2));
+                uranusColor = mix(uranusColor, uranusColor.mul(0.96), fineDetail.step(0.58).mul(0.1));
                 
-                // Polar region (tilted axis effect) - more prominent
-                const polar = pos.y.abs().greaterThan(0.68);
-                uranusColor = select(polar, mix(uranusColor, uranusPole, float(0.4)), uranusColor);
+                // Polar region (tilted axis effect) - beautiful glow
+                const polar = pos.y.abs().greaterThan(0.65);
+                const polarBlend = pos.y.abs().sub(0.65).mul(3.0).clamp(0.0, 1.0);
+                uranusColor = select(polar, mix(uranusColor, uranusPole, polarBlend.mul(0.5)), uranusColor);
                 
-                // Enhanced atmospheric haze
-                const atmosColor = vec3(0.80, 0.97, 1.0);
-                uranusColor = uranusColor.add(atmosColor.mul(fresnel.pow(1.3)).mul(0.45));
+                // Gorgeous atmospheric haze
+                const atmosColor = vec3(0.75, 0.98, 1.0);
+                uranusColor = uranusColor.add(atmosColor.mul(fresnel.pow(1.0)).mul(0.55));
                 
                 material.colorNode = uranusColor;
-                material.roughness = 0.32;
+                material.roughness = 0.28;
                 material.metalnessNode = float(0.0);
                 break;
             }
@@ -496,17 +654,19 @@ export class Simulation {
                 const fineDetail = mx_noise_float(pos.mul(45.0));
                 const bands = sin(pos.y.mul(10.0).add(largeStorm)).mul(0.5).add(0.5);
                 
-                // More vibrant deep blue colors
-                const neptuneDeep = vec3(0.18, 0.32, 0.82);
-                const neptuneBlue = vec3(0.25, 0.45, 0.92);
-                const neptuneBright = vec3(0.35, 0.55, 0.98);
-                const neptuneLight = vec3(0.50, 0.68, 1.0);
-                const stormWhite = vec3(0.95, 0.96, 1.0);
-                const darkSpot = vec3(0.12, 0.22, 0.60);
+                // Stunning deep azure colors
+                const neptuneDeep = vec3(0.12, 0.28, 0.78);
+                const neptuneBlue = vec3(0.20, 0.42, 0.92);
+                const neptuneBright = vec3(0.32, 0.55, 0.98);
+                const neptuneLight = vec3(0.48, 0.68, 1.0);
+                const neptuneVibrant = vec3(0.25, 0.50, 0.95);
+                const stormWhite = vec3(0.96, 0.97, 1.0);
+                const darkSpot = vec3(0.08, 0.18, 0.55);
                 
-                let neptuneColor = mix(neptuneBlue, neptuneDeep, bands.mul(0.35));
-                neptuneColor = mix(neptuneColor, neptuneBright, bands.step(0.5).mul(0.3));
-                neptuneColor = mix(neptuneColor, neptuneLight, medStorm.step(0.62).mul(0.35));
+                let neptuneColor = mix(neptuneBlue, neptuneDeep, bands.mul(0.4));
+                neptuneColor = mix(neptuneColor, neptuneBright, bands.step(0.5).mul(0.35));
+                neptuneColor = mix(neptuneColor, neptuneVibrant, bands.step(0.35).mul(0.25));
+                neptuneColor = mix(neptuneColor, neptuneLight, medStorm.step(0.60).mul(0.4));
                 
                 // Great Dark Spot region
                 const spotDist = pos.x.add(0.2).mul(pos.x.add(0.2)).add(pos.y.mul(pos.y).mul(3.0)).add(pos.z.mul(pos.z));
@@ -520,12 +680,12 @@ export class Simulation {
                 // Fine texture
                 neptuneColor = mix(neptuneColor, neptuneColor.mul(0.92), fineDetail.step(0.55).mul(0.12));
                 
-                // Enhanced bright blue atmosphere
-                const atmosColor = vec3(0.55, 0.75, 1.0);
-                neptuneColor = neptuneColor.add(atmosColor.mul(fresnel.pow(1.2)).mul(0.5));
+                // Gorgeous bright blue atmosphere
+                const atmosColor = vec3(0.50, 0.72, 1.0);
+                neptuneColor = neptuneColor.add(atmosColor.mul(fresnel.pow(1.0)).mul(0.65));
                 
                 material.colorNode = neptuneColor;
-                material.roughness = 0.32;
+                material.roughness = 0.28;
                 material.metalnessNode = float(0.0);
                 break;
             }
