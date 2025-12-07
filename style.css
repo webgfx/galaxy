@@ -1,0 +1,194 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+}
+
+#canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+#ui-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 250px;
+    pointer-events: none; /* Let clicks pass through to canvas if needed, but buttons need pointer-events: auto */
+}
+
+#ui-container * {
+    pointer-events: auto;
+}
+
+h1 {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+p {
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-bottom: 15px;
+}
+
+.status {
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    text-align: center;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background: #2563eb;
+}
+
+button:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+}
+
+.controls {
+    margin-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+}
+
+.control-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.label {
+    color: #aaa;
+}
+
+.value {
+    font-family: monospace;
+    color: #4ade80;
+}
+
+.gesture-list {
+    margin-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+}
+
+.gesture-list h3 {
+    font-size: 0.9rem;
+    margin: 0 0 10px 0;
+    color: #aaa;
+    font-weight: 600;
+}
+
+.gesture-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.gesture-list li {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gesture-list b {
+    color: #fff;
+    font-weight: 500;
+}
+
+.manual-controls {
+    margin-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+}
+
+.manual-controls h3 {
+    font-size: 0.9rem;
+    margin: 0 0 10px 0;
+    color: #aaa;
+    font-weight: 600;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.button-group button {
+    flex: 1;
+    font-size: 0.85rem;
+    padding: 8px;
+}
+
+#btn-attract {
+    background: #ec4899; /* Pink for attract */
+}
+
+#btn-attract:hover {
+    background: #db2777;
+}
+
+#btn-release {
+    background: #10b981; /* Green for release */
+}
+
+#btn-release:hover {
+    background: #059669;
+}
+
+.hint {
+    font-size: 0.75rem;
+    color: #666;
+    margin-top: 8px;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+#webcam {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 200px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    z-index: 10;
+    opacity: 0.8;
+    transform: scaleX(-1); /* Mirror the webcam */
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System Simulation</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.170.0/build/three.webgpu.js",
+                "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="ui-container">
+        <h1 id="title">Solar System</h1>
+        <p id="subtitle">Explore the planets with mouse and controls.</p>
+        <div class="manual-controls">
+            <h3 id="controls-title">Controls</h3>
+            <div class="button-group">
+                <button id="btn-zoom-in">Zoom In</button>
+                <button id="btn-zoom-out">Zoom Out</button>
+                <button id="btn-stop">Pause</button>
+                <button id="btn-lang">中文</button>
+            </div>
+            <p class="hint" id="hint">Use mouse to orbit, scroll to zoom</p>
+        </div>
+    </div>
+    <canvas id="canvas"></canvas>
+
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
